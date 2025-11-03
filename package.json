@@ -10,6 +10,9 @@
     "package": "plasmo package"
   },
   "dependencies": {
+    "@plasmohq/messaging": "^0.7.2",
+    "@plasmohq/storage": "^1.15.0",
+    "@supabase/supabase-js": "^2.78.0",
     "plasmo": "0.90.5",
     "react": "18.2.0",
     "react-dom": "18.2.0"
@@ -24,8 +27,20 @@
     "typescript": "5.3.3"
   },
   "manifest": {
+    "permissions": [
+      "storage",
+      "identity",
+      "tabs",
+      "activeTab",
+      "scripting",
+      "alarms"
+    ],
     "host_permissions": [
-      "https://*/*"
-    ]
+      "<all_urls>"
+    ],
+    "action": {
+      "default_popup": "popup.html",
+      "default_title": "Highlights"
+    }
   }
 }
