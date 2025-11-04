@@ -1,7 +1,9 @@
 // contents/utils/observers.ts
+import { currentHighlights, highlighterEnabled } from "../highlighter"
 import {
   CALM_DURATION,
   CSS_CLASSES,
+  HN_DISABLED_CLASS,
   MAX_WAIT,
   THROTTLE_INTERVAL
 } from "./constants"
@@ -14,6 +16,10 @@ import type { HighlightAnchor } from "./types"
 /**
  * Wait for DOM to "settle" (no mutations for a certain duration)
  */
+function toggleHighlighterVisuals(enabled: boolean) {
+  document.documentElement.classList.toggle(HN_DISABLED_CLASS, !enabled)
+}
+
 export function waitForPageCalm(
   maxWait = MAX_WAIT,
   calmDuration = CALM_DURATION
@@ -69,6 +75,11 @@ export function applyAllHighlights(highlights: HighlightAnchor[]): void {
     )
     applyHighlight(h)
   }
+  document.querySelectorAll(".hn-note-icon").forEach((icon) => {
+    if (!icon.previousElementSibling?.classList.contains("hn-highlight")) {
+      icon.remove()
+    }
+  })
 }
 
 /**
@@ -78,15 +89,17 @@ let globalObserver: MutationObserver | null = null
 
 /**
  * Observe DOM changes and re-apply highlights when needed (React, SPA updates)
+ * 🔥 Now reads from module cache instead of closure
  */
 
-export function observeDomChanges(highlights: HighlightAnchor[]): void {
+export function observeDomChanges(): void {
   console.log("%c[Observer] Watching DOM for React updates...", "color:#ff5722")
 
   let reapplyTimeout: number | null = null
   let lastCheckTime = 0
 
   globalObserver = new MutationObserver((mutations) => {
+    toggleHighlighterVisuals(highlighterEnabled)
     if (mutations.some((m) => m.type === "childList")) {
       if (reapplyTimeout) clearTimeout(reapplyTimeout)
 
@@ -97,19 +110,24 @@ export function observeDomChanges(highlights: HighlightAnchor[]): void {
 
         lastCheckTime = now
 
-        // 🐛 FIX: Count actual vs. expected highlights
+        // 🔥 FIXED: Read from live cache instead of stale closure
         const currentCount = document.querySelectorAll(
           `.${CSS_CLASSES.HIGHLIGHT}`
         ).length
-        const expectedCount = highlights.length
+        const expectedCount = currentHighlights.length
 
+        if (!highlighterEnabled) {
+          toggleHighlighterVisuals(false)
+          return
+        }
         if (currentCount < expectedCount) {
           console.log(
             `%c[Observer] React updated DOM → Re-applying highlights (${currentCount}/${expectedCount} visible)`,
             "color:#ff5722"
           )
-          applyAllHighlights(highlights)
+          applyAllHighlights(currentHighlights)
           attachHighlightHoverHandlers()
+          setTimeout(() => toggleHighlighterVisuals(true), 50)
         }
       }, 500)
     }

@@ -45,8 +45,6 @@ export async function createHighlight(
   if (note) span.dataset.note = note
 
   wrapRangeInElement(range, span)
-  if (note) addNoteIcon(span, note)
-
   const anchor: HighlightAnchor = {
     id,
     quote,
@@ -84,9 +82,9 @@ export function applyHighlight(anchor: HighlightAnchor): void {
   const span = document.createElement("mark")
   span.className = CSS_CLASSES.HIGHLIGHT
   if (id) span.dataset.id = id
+  if (note) span.dataset.note = note
   span.style.background = color
   wrapRangeInElement(range, span)
-  if (note) addNoteIcon(span, note)
   console.log("%c[Apply] ✓ Highlight restored successfully", "color:#4caf50")
 }
 
@@ -105,3 +103,17 @@ export function attachHighlightHoverHandlers(): void {
     hl.addEventListener("mouseenter", (e) => showHighlightToolbar(hl, e))
   })
 }
+
+// 📝 Handle clicks on highlights with notes
+document.addEventListener("click", (e) => {
+  const mark = (e.target as HTMLElement)?.closest?.(
+    "mark.hn-highlight[data-note]"
+  ) as HTMLElement | null
+  if (!mark) return
+
+  const note = mark.dataset.note || ""
+  if (!note) return
+
+  const preview = note.length > 200 ? note.slice(0, 200) + "..." : note
+  alert(`📝 Note:\n\n${preview}`)
+})

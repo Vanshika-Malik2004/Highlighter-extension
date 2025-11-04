@@ -10,7 +10,10 @@ import {
   waitForPageCalm
 } from "./utils/observers"
 import { showHighlightToolbar, showToolbar } from "./utils/toolbars"
+import type { HighlightAnchor } from "./utils/types"
 
+// 🔥 Module-level cache: single source of truth for highlights
+export let currentHighlights: HighlightAnchor[] = []
 export let highlighterEnabled = true
 
 console.log(
@@ -25,28 +28,44 @@ function ensureHNStyleTag() {
   const style = document.createElement("style")
   style.id = "hn-style-tag"
   style.textContent = `
-    /* Hide highlight visuals when disabled */
-    .${HN_DISABLED_CLASS} mark.hn-highlight {
-      background: transparent !important;
-      box-shadow: none !important;
-      outline: none !important;
-      pointer-events: none !important;
-      color: inherit !important;
-    }
+  /* 🔹 When disabled: hide highlight visuals */
+  .${HN_DISABLED_CLASS} mark.hn-highlight {
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+    pointer-events: none !important;
+    color: inherit !important;
+  }
 
-    /* Hide note icons and toolbars */
-    .${HN_DISABLED_CLASS} .hn-note-icon,
-    .${HN_DISABLED_CLASS} .hn-toolbar,
-    .${HN_DISABLED_CLASS} .hn-hover-toolbar,
-    .${HN_DISABLED_CLASS} .hn-edit-toolbar {
-      display: none !important;
-    }
-  `
+  /* 🔹 Add a built-in note icon when data-note exists */
+  mark.hn-highlight[data-note]::after {
+    content: " 📝";
+    font-size: 0.8em;
+    vertical-align: super;
+    margin-left: 2px;
+    opacity: 0.8;
+    cursor: pointer;
+  }
+
+  /* 🔹 Hide the note indicator when disabled */
+  .${HN_DISABLED_CLASS} mark.hn-highlight[data-note]::after {
+    content: "";
+  }
+
+  /* 🔹 Hide any toolbars completely when disabled */
+  .${HN_DISABLED_CLASS} .hn-toolbar,
+  .${HN_DISABLED_CLASS} .hn-hover-toolbar,
+  .${HN_DISABLED_CLASS} .hn-edit-toolbar {
+    display: none !important;
+  }`
+
   document.head.appendChild(style)
 }
 
 function toggleHighlighterVisuals(enabled: boolean) {
-  document.documentElement.classList.toggle(HN_DISABLED_CLASS, !enabled)
+  setTimeout(() => {
+    document.documentElement.classList.toggle(HN_DISABLED_CLASS, !enabled)
+  }, 100)
 }
 
 // === On load: reapply any saved highlights ===
@@ -75,11 +94,14 @@ function toggleHighlighterVisuals(enabled: boolean) {
         "%c[Reapply] Page is calm, applying highlights...",
         "color:#4caf50"
       )
+      // 🔥 Update module cache
+      currentHighlights = data.highlights
+
       applyAllHighlights(data.highlights)
       attachHighlightHoverHandlers()
 
       // 👁️ Watch for DOM re-renders (React, SPA routing, etc.)
-      observeDomChanges(data.highlights)
+      observeDomChanges()
     })
   } else {
     console.log(
@@ -149,7 +171,7 @@ async function enableHighlighter() {
   if (highlighterEnabled) return
   highlighterEnabled = true
   console.log("%c[Highlighter] Enabled", "color:green")
-
+  await new Promise((r) => setTimeout(r, 200))
   toggleHighlighterVisuals(true)
 
   // Reattach listeners
@@ -160,6 +182,9 @@ async function enableHighlighter() {
   const url = location.href
   const data = (await chrome.storage.local.get(url))[url]
   const highlights = data?.highlights ?? []
+
+  // 🔥 Update module cache
+  currentHighlights = highlights
 
   const visibleHighlights = document.querySelectorAll(".hn-highlight").length
 
