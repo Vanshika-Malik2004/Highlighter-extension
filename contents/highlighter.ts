@@ -59,7 +59,6 @@ function toggleHighlighterVisuals(enabled: boolean) {
   if (!highlighterEnabled) {
     console.log("%c[Highlighter] Disabled by user", "color:red")
     toggleHighlighterVisuals(false)
-    return
   }
   const url = location.href
   const data = (await chrome.storage.local.get(url))[url]
@@ -151,10 +150,26 @@ async function enableHighlighter() {
   highlighterEnabled = true
   console.log("%c[Highlighter] Enabled", "color:green")
 
-  // Re-enable visual highlights
   toggleHighlighterVisuals(true)
 
   // Reattach listeners
   document.addEventListener("mouseup", handleSelection)
   attachHighlightHoverHandlers()
+
+  // ✅ Reapply stored highlights if none are visible
+  const url = location.href
+  const data = (await chrome.storage.local.get(url))[url]
+  const highlights = data?.highlights ?? []
+
+  const visibleHighlights = document.querySelectorAll(".hn-highlight").length
+
+  if (highlights.length && visibleHighlights === 0) {
+    console.log(
+      "%c[Reapply] Reapplying stored highlights on enable...",
+      "color:#4caf50"
+    )
+    await waitForPageCalm()
+    applyAllHighlights(highlights)
+    attachHighlightHoverHandlers()
+  }
 }
