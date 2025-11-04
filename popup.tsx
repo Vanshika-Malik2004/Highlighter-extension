@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react"
 
+import { HIGHLIGHTER_ENABLED_KEY } from "./contents/utils/constants"
+
 export default function IndexPopup() {
   const [tabUrl, setTabUrl] = useState("")
   const [highlights, setHighlights] = useState<any[]>([])
+  const [enabled, setEnabled] = useState(true) // 🌟 toggle state
 
-  // 🧠 Fetch highlights for active tab
+  // 🧠 Fetch highlights + enabled state on load
   useEffect(() => {
-    async function fetchHighlights() {
+    async function init() {
       const [tab] = await chrome.tabs.query({
         active: true,
         currentWindow: true
@@ -14,14 +17,40 @@ export default function IndexPopup() {
       const url = tab?.url ?? ""
       setTabUrl(url)
 
-      if (!url) return
-      const data = (await chrome.storage.local.get(url))[url]
-      setHighlights(data?.highlights ?? [])
+      // 🟢 Load highlights for the page
+      if (url) {
+        const data = (await chrome.storage.local.get(url))[url]
+        setHighlights(data?.highlights ?? [])
+      }
+
+      // 🟢 Load enabled/disabled state from sync storage
+      const { [HIGHLIGHTER_ENABLED_KEY]: highlighterEnabled } =
+        await chrome.storage.sync.get(HIGHLIGHTER_ENABLED_KEY)
+      setEnabled(highlighterEnabled !== false) // default true
     }
 
-    fetchHighlights()
+    init()
   }, [])
 
+  // 🧩 Toggle handler
+  const toggleHighlighter = async () => {
+    const newState = !enabled
+    setEnabled(newState)
+
+    // ✅ use the shared key constant
+    await chrome.storage.sync.set({ [HIGHLIGHTER_ENABLED_KEY]: newState })
+
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+    if (!tab?.id) return
+
+    // ✅ send unified message to content script
+    await chrome.tabs.sendMessage(tab.id, {
+      type: "TOGGLE_HIGHLIGHTER",
+      enabled: newState
+    })
+  }
+
+  // 🧭 Jump to a highlight
   const handleJump = async (id: string) => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
     if (!tab?.id) return
@@ -36,8 +65,36 @@ export default function IndexPopup() {
         padding: 12,
         fontFamily: "Inter, system-ui, sans-serif"
       }}>
-      <h3 style={{ margin: 0 }}>Highlights for this page</h3>
-      <p style={{ fontSize: 12, opacity: 0.7 }}>{tabUrl || "(unknown)"}</p>
+      {/* 🌟 Header row with toggle */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center"
+        }}>
+        <h3 style={{ margin: 0 }}>Highlights</h3>
+        <label
+          style={{
+            fontSize: 13,
+            cursor: "pointer",
+            userSelect: "none",
+            display: "flex",
+            alignItems: "center",
+            gap: 4
+          }}>
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={toggleHighlighter}
+            style={{ cursor: "pointer" }}
+          />
+          <span>{enabled ? "On" : "Off"}</span>
+        </label>
+      </div>
+
+      <p style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
+        {tabUrl || "(unknown)"}
+      </p>
 
       {highlights.length === 0 ? (
         <p style={{ fontSize: 13, opacity: 0.6, marginTop: 12 }}>
