@@ -16,6 +16,15 @@ import type { HighlightAnchor } from "./types"
 /**
  * Wait for DOM to "settle" (no mutations for a certain duration)
  */
+export let deleteCooldownUntil = 0
+
+export function isDeletingNow() {
+  return Date.now() < deleteCooldownUntil
+}
+export function startDeleteCooldown(ms = 500) {
+  deleteCooldownUntil = Date.now() + ms
+}
+
 function toggleHighlighterVisuals(enabled: boolean) {
   document.documentElement.classList.toggle(HN_DISABLED_CLASS, !enabled)
 }
@@ -109,13 +118,14 @@ export function observeDomChanges(): void {
         if (now - lastCheckTime < THROTTLE_INTERVAL) return
 
         lastCheckTime = now
-
+        if (isDeletingNow()) {
+          return
+        }
         // 🔥 FIXED: Read from live cache instead of stale closure
         const currentCount = document.querySelectorAll(
           `.${CSS_CLASSES.HIGHLIGHT}`
         ).length
         const expectedCount = currentHighlights.length
-
         if (!highlighterEnabled) {
           toggleHighlighterVisuals(false)
           return

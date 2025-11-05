@@ -36,7 +36,8 @@
       "alarms"
     ],
     "host_permissions": [
-      "<all_urls>"
+      "<all_urls>",
+      "https://*.supabase.co/*"
     ],
     "action": {
       "default_popup": "popup.html",

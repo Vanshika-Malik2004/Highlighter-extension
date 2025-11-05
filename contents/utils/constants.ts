@@ -14,3 +14,6 @@ export const CSS_CLASSES = {
 export const THROTTLE_INTERVAL = 1000 // max once per second
 export const CALM_DURATION = 300 // ms
 export const MAX_WAIT = 5000 // ms
+export const SUPABASE_SESSION_KEY = "supabaseSession"
+export const SUPABASE_URL_KEY = "supabaseUrl"
+export const SUPABASE_ANON_KEY = "supabaseAnonKey"

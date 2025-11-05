@@ -3,6 +3,7 @@
 import { computeOffsets, findQuote, getContext, getCssPath } from "./anchoring"
 import { CSS_CLASSES } from "./constants"
 import { addNoteIcon, wrapRangeInElement } from "./dom-utils"
+import { isDeletingNow } from "./observers"
 import { saveHighlight } from "./storage"
 import { showHighlightToolbar } from "./toolbars"
 import type { HighlightAnchor } from "./types"
@@ -64,6 +65,7 @@ export async function createHighlight(
  * Apply a saved highlight to the DOM
  */
 export function applyHighlight(anchor: HighlightAnchor): void {
+  if (isDeletingNow()) return
   console.log(
     "%c[Apply] Applying saved highlight:",
     "color:#ffc107",

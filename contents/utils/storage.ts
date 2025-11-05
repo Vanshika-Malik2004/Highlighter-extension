@@ -1,6 +1,7 @@
 // contents/utils/storage.ts
 
 import { currentHighlights } from "../highlighter"
+import { isDeletingNow, startDeleteCooldown } from "./observers"
 import type { HighlightAnchor } from "./types"
 
 /**
@@ -53,35 +54,46 @@ export async function updateHighlightInStorage(
 /**
  * Delete a highlight from storage
  */
+// contents/utils/storage.ts
+
 export async function deleteHighlight(target: HTMLElement) {
-  const id = target.dataset.id
+  const id = target.dataset.id || target.getAttribute("id")
   if (!id) return
 
-  // 🧹 Case 1: Remove associated note icon if it's a sibling
-  const siblingIcon = target.nextElementSibling
-  if (siblingIcon && siblingIcon.classList.contains("hn-note-icon")) {
-    siblingIcon.remove()
+  // 1) Start short cooldown so MutationObserver won’t repaint this deletion
+  startDeleteCooldown(500)
+
+  // 2) Update in-memory cache FIRST (so expectedCount drops before DOM mutation)
+  {
+    const idx = currentHighlights.findIndex((h) => h.id === id)
+    if (idx !== -1) currentHighlights.splice(idx, 1)
   }
 
-  // 🧹 Case 2: Remove any embedded note icons inside the highlight (for React/SPAs)
-  target.querySelectorAll(".hn-note-icon").forEach((icon) => icon.remove())
+  // 3) Unwrap *all* instances of this highlight id across the document
+  const nodes = document.querySelectorAll(
+    `mark.hn-highlight[id="${id}"], mark.hn-highlight[data-id="${id}"]`
+  )
+  nodes.forEach((node) => {
+    const el = node as HTMLElement
 
-  // Unwrap the text (remove <mark>)
-  target.replaceWith(...Array.from(target.childNodes))
+    // remove sibling note icon (if any)
+    const sib = el.nextElementSibling
+    if (sib && sib.classList.contains("hn-note-icon")) sib.remove()
 
-  // 🧠 Update storage
+    // remove any embedded note icons
+    el.querySelectorAll(".hn-note-icon").forEach((icon) => icon.remove())
+
+    // unwrap <mark> → keep text
+    const frag = document.createDocumentFragment()
+    Array.from(el.childNodes).forEach((n) => frag.appendChild(n))
+    el.replaceWith(frag)
+  })
+
+  // 4) Update storage last
   const url = location.href
-  const data = (await chrome.storage.local.get(url))[url]
-  if (!data?.highlights) return
-
-  const filtered = data.highlights.filter((h: any) => h.id !== id)
+  const data = (await chrome.storage.local.get(url))[url] ?? { highlights: [] }
+  const filtered = (data.highlights ?? []).filter((h: any) => h.id !== id)
   await chrome.storage.local.set({ [url]: { ...data, highlights: filtered } })
-
-  // 🔥 Update module cache - THIS FIXES THE INFINITE LOOP!
-  const cacheIdx = currentHighlights.findIndex((h) => h.id === id)
-  if (cacheIdx !== -1) {
-    currentHighlights.splice(cacheIdx, 1)
-  }
 
   console.log("%c[Storage] Highlight deleted:", "color:red", id)
 }
