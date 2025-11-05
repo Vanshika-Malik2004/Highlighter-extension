@@ -155,6 +155,10 @@ export default function IndexPopup() {
             <p style={{ fontSize: 13, opacity: 0.6, marginTop: 12 }}>
               No highlights found.
             </p>
+          ) : !enabled ? (
+            <p style={{ fontSize: 13, opacity: 0.6, marginTop: 12 }}>
+              Enable highlighter to view highlights{" "}
+            </p>
           ) : (
             <div style={{ marginTop: 10, maxHeight: 260, overflowY: "auto" }}>
               {highlights.map((h, i) => (
@@ -175,7 +179,11 @@ export default function IndexPopup() {
                     style={{ cursor: "pointer", flex: 1 }}
                     title="Jump to this highlight">
                     <div
-                      style={{ fontSize: 13, fontWeight: 500, color: "#222" }}>
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: "#222"
+                      }}>
                       {h.quote?.length > 200
                         ? h.quote.slice(0, 200) + "…"
                         : h.quote}
