@@ -170,7 +170,6 @@ async function disableHighlighter(skipHide = false) {
   toggleHighlighterVisuals(false)
 
   if (!skipHide) {
-    // Close any open toolbars (already done in detachCoreListeners)
   }
 }
 

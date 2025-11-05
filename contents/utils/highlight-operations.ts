@@ -72,6 +72,13 @@ export function applyHighlight(anchor: HighlightAnchor): void {
     anchor.quote.slice(0, 60)
   )
   const { quote, prefix, suffix, color, note, id } = anchor
+  if (
+    id &&
+    document.querySelector(`.${CSS_CLASSES.HIGHLIGHT}[data-id="${id}"]`)
+  ) {
+    console.log("%c[Apply] Skipping - already exists:", "color:#ff9800", id)
+    return
+  }
   const range = findQuote(document.body, quote, prefix, suffix)
   if (!range) {
     console.warn(
