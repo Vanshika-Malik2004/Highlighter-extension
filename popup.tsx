@@ -46,22 +46,64 @@ export default function IndexPopup() {
     )
     return () => listener.subscription.unsubscribe()
   }, [])
-
   // Load highlights for current URL
   useEffect(() => {
     if (!tabUrl) return
     ;(async () => {
+      // 1️⃣ Load from local storage first
       const local = (await chrome.storage.local.get(tabUrl))[tabUrl]
-      setHighlights(local?.highlights ?? [])
+      const localHighlights = local?.highlights ?? []
 
-      if (user) {
-        try {
-          const remote = await listHighlightsForUrl(tabUrl)
-          setHighlights(remote)
-        } catch {}
+      if (!user) {
+        // Not logged in → show only local
+        setHighlights(localHighlights)
+        return
+      }
+
+      // 2️⃣ Fetch from Supabase and merge with local
+      try {
+        const remote = await listHighlightsForUrl(tabUrl)
+
+        // Create a map of remote highlights by ID for fast lookup
+        const remoteMap = new Map(remote.map((h) => [h.id, h]))
+
+        // Merge strategy: prefer remote version if exists, otherwise use local
+        const merged = localHighlights.map((h) => remoteMap.get(h.id) || h)
+
+        // Add any remote highlights that aren't in local
+        remote.forEach((h) => {
+          if (!localHighlights.find((local) => local.id === h.id)) {
+            merged.push(h)
+          }
+        })
+
+        console.log(
+          `[Popup] Merged highlights: ${localHighlights.length} local + ${remote.length} remote = ${merged.length} total`
+        )
+        await chrome.storage.local.set({
+          [tabUrl]: { highlights: merged }
+        })
+
+        console.log(
+          `[Popup] Saved ${merged.length} merged highlights to local storage`
+        )
+        setHighlights(merged)
+      } catch (err) {
+        console.warn("[Popup] Failed to fetch remote, showing local only:", err)
+        // Network error → fall back to local
+        setHighlights(localHighlights)
       }
     })()
   }, [tabUrl, user])
+  // Process sync queue when popup first opens (if logged in)
+  useEffect(() => {
+    if (user) {
+      console.log("[Popup] Popup opened - processing sync queue")
+      processSyncQueue().catch((err) =>
+        console.warn("[Popup] Sync queue failed:", err)
+      )
+    }
+  }, []) // Empty deps = run once on mount
   useEffect(() => {
     if (user) processSyncQueue().catch(() => {})
   }, [user])

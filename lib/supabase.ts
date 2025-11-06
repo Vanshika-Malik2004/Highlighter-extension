@@ -28,6 +28,13 @@ export const supabase = createClient(
       storage: chromeStorageAdapter,
       detectSessionInUrl: false
     },
-    global: { headers: { "x-client-info": "plasmo-highlighter" } }
+    global: {
+      headers: { "x-client-info": "plasmo-highlighter" }
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 0 // ✅ Disable realtime to prevent WebSocket errors
+      }
+    }
   }
 )
