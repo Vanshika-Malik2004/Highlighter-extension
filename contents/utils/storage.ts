@@ -1,8 +1,14 @@
 // contents/utils/storage.ts
 
+import {
+  addToSyncQueue,
+  deleteHighlightFromSupabase,
+  upsertHighlight
+} from "../../lib/highlight-sync"
+import { supabase } from "../../lib/supabase"
 import { currentHighlights } from "../highlighter"
-import { isDeletingNow, startDeleteCooldown } from "./observers"
-import type { HighlightAnchor } from "./types"
+import { startDeleteCooldown } from "./observers"
+import type { Highlight, HighlightAnchor } from "./types"
 
 /**
  * Save a highlight to chrome.storage.local
@@ -19,6 +25,48 @@ export async function saveHighlight(anchor: HighlightAnchor): Promise<void> {
   currentHighlights.push(anchor)
 
   console.log("%c[Storage] Highlight saved:", "color:#03a9f4", anchor)
+  try {
+    const {
+      data: { session }
+    } = await supabase.auth.getSession()
+    const userId = session?.user?.id
+
+    if (!userId) {
+      console.warn("No user logged in, skipping Supabase sync")
+      return
+    }
+    // Convert to simple Highlight shape for Supabase
+    await upsertHighlight({
+      id: anchor.id,
+      user_id: userId,
+      url,
+      quote: anchor.quote,
+      prefix: anchor.prefix,
+      suffix: anchor.suffix,
+      color: anchor.color,
+      css_path: anchor.css_path,
+      start_pos: anchor.start_pos,
+      end_pos: anchor.end_pos,
+      note: anchor.note
+    })
+  } catch (err) {
+    console.warn("Failed to sync to Supabase, queued for retry:", err)
+    await addToSyncQueue({
+      kind: "save",
+      highlight: {
+        id: anchor.id,
+        url,
+        quote: anchor.quote,
+        prefix: anchor.prefix,
+        suffix: anchor.suffix,
+        color: anchor.color,
+        note: anchor.note,
+        css_path: anchor.css_path,
+        start_pos: anchor.start_pos,
+        end_pos: anchor.end_pos
+      }
+    })
+  }
 }
 
 /**
@@ -49,6 +97,52 @@ export async function updateHighlightInStorage(
     "color:#4caf50",
     data.highlights[idx]
   )
+  try {
+    const {
+      data: { session }
+    } = await supabase.auth.getSession()
+    const userId = session?.user?.id
+
+    if (!userId) {
+      console.warn("No user logged in, skipping Supabase sync")
+      return
+    }
+    const updated = data.highlights[idx]
+    await addToSyncQueue({
+      kind: "save",
+      highlight: {
+        id: updated.id,
+        user_id: userId,
+        url,
+        quote: updated.quote,
+        prefix: updated.prefix,
+        suffix: updated.suffix,
+        color: updated.color,
+        note: updated.note,
+        css_path: updated.css_path,
+        start_pos: updated.start_pos,
+        end_pos: updated.end_pos
+      }
+    })
+  } catch (err) {
+    console.warn("Failed to sync update to Supabase, queued:", err)
+    const updated = data.highlights[idx]
+    await addToSyncQueue({
+      kind: "save",
+      highlight: {
+        id: updated.id,
+        url,
+        quote: updated.quote,
+        prefix: updated.prefix,
+        suffix: updated.suffix,
+        color: updated.color,
+        note: updated.note,
+        css_path: updated.css_path,
+        start_pos: updated.start_pos,
+        end_pos: updated.end_pos
+      }
+    })
+  }
 }
 
 /**
@@ -96,4 +190,10 @@ export async function deleteHighlight(target: HTMLElement) {
   await chrome.storage.local.set({ [url]: { ...data, highlights: filtered } })
 
   console.log("%c[Storage] Highlight deleted:", "color:red", id)
+  try {
+    await deleteHighlightFromSupabase(id)
+  } catch (err) {
+    console.warn("Failed to delete on Supabase, queued:", err)
+    await addToSyncQueue({ kind: "delete", id })
+  }
 }

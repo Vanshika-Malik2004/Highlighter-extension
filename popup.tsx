@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 
 import AuthForm from "./components/AuthForm"
 import { HIGHLIGHTER_ENABLED_KEY } from "./contents/utils/constants"
-import { listHighlightsForUrl } from "./lib/highlight-sync"
+import { listHighlightsForUrl, processSyncQueue } from "./lib/highlight-sync"
 import { supabase } from "./lib/supabase"
 
 export default function IndexPopup() {
@@ -16,25 +16,6 @@ export default function IndexPopup() {
     if (!tab?.id) return
     await chrome.tabs.sendMessage(tab.id, { type: "SCROLL_TO_HIGHLIGHT", id })
     window.close()
-  }
-
-  const handleDelete = async (id: string) => {
-    // 1) Remove from local storage for this URL
-    const url = tabUrl
-    const data = (await chrome.storage.local.get(url))[url] ?? {
-      highlights: []
-    }
-    const next = { highlights: data.highlights.filter((h: any) => h.id !== id) }
-    await chrome.storage.local.set({ [url]: next })
-
-    // 2) Update popup state
-    setHighlights(next.highlights)
-
-    // 3) Tell content script to unpaint immediately (no refresh)
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-    if (tab?.id) {
-      await chrome.tabs.sendMessage(tab.id, { type: "DELETE_HIGHLIGHT", id })
-    }
   }
   // On mount: fetch tab info + session
   useEffect(() => {
@@ -81,7 +62,9 @@ export default function IndexPopup() {
       }
     })()
   }, [tabUrl, user])
-
+  useEffect(() => {
+    if (user) processSyncQueue().catch(() => {})
+  }, [user])
   const toggleHighlighter = async () => {
     const newState = !enabled
     setEnabled(newState)

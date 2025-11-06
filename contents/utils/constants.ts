@@ -17,3 +17,9 @@ export const MAX_WAIT = 5000 // ms
 export const SUPABASE_SESSION_KEY = "supabaseSession"
 export const SUPABASE_URL_KEY = "supabaseUrl"
 export const SUPABASE_ANON_KEY = "supabaseAnonKey"
+
+// contents/utils/constants.ts
+export const SYNC_QUEUE_KEY = "__SYNC_QUEUE__"
+export const PROCESSING_FLAG_KEY = "__SYNC_PROCESSING__"
+export const SYNC_BATCH_SIZE = 20
+export const SYNC_INTERVAL_MS = 7000
