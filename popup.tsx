@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react"
 
+import "./style.css"
+
 import AuthForm from "./components/AuthForm"
 import { HIGHLIGHTER_ENABLED_KEY } from "./contents/utils/constants"
 import { listHighlightsForUrl, processSyncQueue } from "./lib/highlight-sync"
@@ -58,6 +60,12 @@ export default function IndexPopup() {
         // Not logged in → show only local
         setHighlights(localHighlights)
         return
+      }
+      try {
+        await processSyncQueue() // ⬅️ ADD THIS LINE
+        console.log("[Popup] Sync queue processed, now fetching from Supabase")
+      } catch (err) {
+        console.warn("[Popup] Sync failed:", err)
       }
 
       // 2️⃣ Fetch from Supabase and merge with local
@@ -143,93 +151,97 @@ export default function IndexPopup() {
     }
   }, [user, tabUrl])
 
-  if (loading) return <div style={{ padding: 16 }}>Loading…</div>
+  if (loading) return <div style={{ padding: 16, minWidth: 340 }}>Loading…</div>
 
   return (
-    <div style={{ width: 340, padding: 12, fontFamily: "Inter, sans-serif" }}>
-      <h3>Highlights</h3>
-
+    <div
+      style={{
+        minWidth: 340,
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#edeef0"
+      }}>
       {!user ? (
         <AuthForm />
       ) : (
-        <>
-          <div style={{ fontSize: 12, marginBottom: 8 }}>
-            Signed in as <b>{user.email}</b>{" "}
-            <button
-              onClick={signOut}
-              style={{
-                border: "1px solid #ccc",
-                borderRadius: 6,
-                marginLeft: 6,
-                padding: "2px 6px"
-              }}>
-              Sign out
-            </button>
-          </div>
-
-          <label style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <input
-              type="checkbox"
-              checked={enabled}
-              onChange={toggleHighlighter}
-            />
-            <span>{enabled ? "On" : "Off"}</span>
-          </label>
-
-          {highlights.length === 0 ? (
-            <p style={{ fontSize: 13, opacity: 0.6, marginTop: 12 }}>
-              No highlights found.
-            </p>
-          ) : !enabled ? (
-            <p style={{ fontSize: 13, opacity: 0.6, marginTop: 12 }}>
-              Enable highlighter to view highlights{" "}
-            </p>
-          ) : (
-            <div style={{ marginTop: 10, maxHeight: 260, overflowY: "auto" }}>
-              {highlights.map((h, i) => (
-                <div
-                  key={h.id || i}
-                  style={{
-                    background: h.color || "#fff475",
-                    borderRadius: 8,
-                    padding: "6px 8px",
-                    marginBottom: 8,
-                    display: "flex",
-                    gap: 8,
-                    alignItems: "flex-start"
-                  }}>
-                  {/* Click area → jump */}
-                  <div
-                    onClick={() => handleJump(h.id)}
-                    style={{ cursor: "pointer", flex: 1 }}
-                    title="Jump to this highlight">
-                    <div
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 500,
-                        color: "#222"
-                      }}>
-                      {h.quote?.length > 200
-                        ? h.quote.slice(0, 200) + "…"
-                        : h.quote}
-                    </div>
-                    {h.note && (
-                      <div
-                        style={{ fontSize: 12, color: "#444", marginTop: 2 }}>
-                        📝{" "}
-                        {h.note.length > 60
-                          ? h.note.slice(0, 60) + "…"
-                          : h.note}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Delete button */}
-                </div>
-              ))}
+        <div style={{ padding: "10px", background: "#edeef0" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "start"
+            }}>
+            <div style={{ marginBottom: 8 }}>
+              <h3 style={{ fontSize: 20, fontWeight: 900 }}>Welcome Back!</h3>
+              {/* <p>{user.email}</p> */}
             </div>
-          )}
-        </>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={enabled}
+                onChange={toggleHighlighter}
+              />
+              <span className="slider round"></span>
+            </label>
+          </div>
+          <div style={{ marginTop: 10, marginBottom: 10 }}>
+            {highlights.length === 0 ? (
+              <b>No highlights found.</b>
+            ) : !enabled ? (
+              <p>Enable highlighter to view highlights </p>
+            ) : (
+              <div style={{ marginTop: 10, maxHeight: 260, overflowY: "auto" }}>
+                {highlights.map((h, i) => (
+                  <div
+                    key={h.id || i}
+                    style={{
+                      background: h.color || "#fff475",
+                      borderRadius: 8,
+                      padding: "6px 8px",
+                      marginBottom: 8,
+                      display: "flex",
+                      gap: 8,
+                      alignItems: "flex-start"
+                    }}>
+                    <div
+                      onClick={() => handleJump(h.id)}
+                      style={{ cursor: "pointer", flex: 1 }}
+                      title="Jump to this highlight">
+                      <div
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 600,
+                          color: "#222"
+                        }}>
+                        {h.quote?.length > 100
+                          ? h.quote.slice(0, 100) + "…"
+                          : h.quote}
+                      </div>
+                      {h.note && (
+                        <div
+                          style={{ fontSize: 12, color: "#444", marginTop: 2 }}>
+                          📝{" "}
+                          {h.note.length > 60
+                            ? h.note.slice(0, 60) + "…"
+                            : h.note}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Delete button */}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <button onClick={signOut} className="sign-out-btn">
+            Sign out
+          </button>
+        </div>
       )}
     </div>
   )
