@@ -4,7 +4,7 @@ import { useState } from "react"
 
 import { supabase } from "../lib/supabase"
 
-type Mode = "signin" | "signup"
+type Mode = "signin" | "signup" | "forgot"
 
 export default function AuthForm() {
   const [mode, setMode] = useState<Mode>("signin")
@@ -27,11 +27,18 @@ export default function AuthForm() {
         })
         if (error) throw error
         setMessage("Signed in!")
-      } else {
+      } else if (mode === "signup") {
         const { error } = await supabase.auth.signUp({ email, password })
         if (error) throw error
         setMessage("Account created! Please sign in.")
         setMode("signin")
+      } else if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: "http://localhost:3000/reset-password"
+        })
+        if (error) throw error
+        setMessage("Password reset link sent! Check your email.")
+        setTimeout(() => setMode("signin"), 3000)
       }
     } catch (err: any) {
       setError(err.message)
@@ -70,7 +77,11 @@ export default function AuthForm() {
           padding: "10px",
           margin: 0
         }}>
-        {mode === "signin" ? "Welcome Back!" : "Create an account"}
+        {mode === "signin"
+          ? "Welcome Back!"
+          : mode === "signup"
+            ? "Create an account"
+            : "Reset Password"}
       </h3>
       <form onSubmit={onSubmit} style={{ display: "grid", gap: "12px" }}>
         <input
@@ -88,21 +99,23 @@ export default function AuthForm() {
             padding: "10px"
           }}
         />
-        <input
-          type="password"
-          value={password}
-          placeholder="Password"
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={{
-            borderRadius: "8px",
-            padding: "10px",
-            border: "2px solid #ccc",
-            fontSize: "14px",
-            background: "#edeef0",
-            minWidth: "200px"
-          }}
-        />
+        {mode !== "forgot" && (
+          <input
+            type="password"
+            value={password}
+            placeholder="Password"
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            style={{
+              borderRadius: "8px",
+              padding: "10px",
+              border: "2px solid #ccc",
+              fontSize: "14px",
+              background: "#edeef0",
+              minWidth: "200px"
+            }}
+          />
+        )}
         <button
           type="submit"
           disabled={loading}
@@ -121,29 +134,48 @@ export default function AuthForm() {
             ? "Please wait..."
             : mode === "signin"
               ? "Sign In"
-              : "Sign Up"}
+              : mode === "signup"
+                ? "Sign Up"
+                : "Send Link"}
         </button>
       </form>
 
       <div style={{ marginTop: "12px", fontSize: "13px" }}>
         {mode === "signin" ? (
           <>
-            No account?{" "}
-            <button
-              onClick={() => setMode("signup")}
-              style={{
-                background: "none",
-                border: "none",
-                color: "#06f",
-                cursor: "pointer",
-                textDecoration: "underline",
-                padding: 0,
-                fontSize: "13px"
-              }}>
-              Sign up
-            </button>
+            <div>
+              No account?{" "}
+              <button
+                onClick={() => setMode("signup")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#06f",
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                  padding: 0,
+                  fontSize: "13px"
+                }}>
+                Sign up
+              </button>
+            </div>
+            <div style={{ marginTop: "8px" }}>
+              <button
+                onClick={() => setMode("forgot")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#06f",
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                  padding: 0,
+                  fontSize: "13px"
+                }}>
+                Forgot password?
+              </button>
+            </div>
           </>
-        ) : (
+        ) : mode === "signup" ? (
           <>
             Have an account?{" "}
             <button
@@ -158,6 +190,23 @@ export default function AuthForm() {
                 fontSize: "13px"
               }}>
               Sign in
+            </button>
+          </>
+        ) : (
+          <>
+            Remember your password?{" "}
+            <button
+              onClick={() => setMode("signin")}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#06f",
+                cursor: "pointer",
+                textDecoration: "underline",
+                padding: 0,
+                fontSize: "13px"
+              }}>
+              Back to sign in
             </button>
           </>
         )}

@@ -1,8 +1,8 @@
-@import url("https://fonts.cdnfonts.com/css/mona-sans");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
 * {
   font-family:
-    "Mona Sans",
+    "Inter",
     -apple-system,
     BlinkMacSystemFont,
     "Segoe UI",
