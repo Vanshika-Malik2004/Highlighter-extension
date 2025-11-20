@@ -24,7 +24,7 @@ export async function saveHighlight(anchor: HighlightAnchor): Promise<void> {
   // 🔥 Update module cache
   currentHighlights.push(anchor)
 
-  console.log("%c[Storage] Highlight saved:", "color:#03a9f4", anchor)
+  // console.log("%c[Storage] Highlight saved:", "color:#03a9f4", anchor)
   try {
     const {
       data: { session }
@@ -32,7 +32,7 @@ export async function saveHighlight(anchor: HighlightAnchor): Promise<void> {
     const userId = session?.user?.id
 
     if (!userId) {
-      console.warn("No user logged in, skipping Supabase sync")
+      // console.warn("No user logged in, skipping Supabase sync")
       return
     }
     // Convert to simple Highlight shape for Supabase
@@ -50,7 +50,7 @@ export async function saveHighlight(anchor: HighlightAnchor): Promise<void> {
       note: anchor.note
     })
   } catch (err) {
-    console.warn("Failed to sync to Supabase, queued for retry:", err)
+    // console.warn("Failed to sync to Supabase, queued for retry:", err)
     await addToSyncQueue({
       kind: "save",
       highlight: {
@@ -92,11 +92,11 @@ export async function updateHighlightInStorage(
     currentHighlights[cacheIdx] = { ...currentHighlights[cacheIdx], ...updates }
   }
 
-  console.log(
-    "%c[Storage] Highlight updated:",
-    "color:#4caf50",
-    data.highlights[idx]
-  )
+  // console.log(
+  //   "%c[Storage] Highlight updated:",
+  //   "color:#4caf50",
+  //   data.highlights[idx]
+  // )
   try {
     const {
       data: { session }
@@ -104,7 +104,7 @@ export async function updateHighlightInStorage(
     const userId = session?.user?.id
 
     if (!userId) {
-      console.warn("No user logged in, skipping Supabase sync")
+      // console.warn("No user logged in, skipping Supabase sync")
       return
     }
     const updated = data.highlights[idx]
@@ -125,7 +125,7 @@ export async function updateHighlightInStorage(
       }
     })
   } catch (err) {
-    console.warn("Failed to sync update to Supabase, queued:", err)
+    // console.warn("Failed to sync update to Supabase, queued:", err)
     const updated = data.highlights[idx]
     await addToSyncQueue({
       kind: "save",
@@ -189,11 +189,11 @@ export async function deleteHighlight(target: HTMLElement) {
   const filtered = (data.highlights ?? []).filter((h: any) => h.id !== id)
   await chrome.storage.local.set({ [url]: { ...data, highlights: filtered } })
 
-  console.log("%c[Storage] Highlight deleted:", "color:red", id)
+  // console.log("%c[Storage] Highlight deleted:", "color:red", id)
   try {
     await deleteHighlightFromSupabase(id)
   } catch (err) {
-    console.warn("Failed to delete on Supabase, queued:", err)
+    // console.warn("Failed to delete on Supabase, queued:", err)
     await addToSyncQueue({ kind: "delete", id })
   }
 }

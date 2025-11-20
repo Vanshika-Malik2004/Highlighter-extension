@@ -42,18 +42,18 @@ export function waitForPageCalm(
       const elapsed = Date.now() - lastMutationTime
       if (elapsed >= calmDuration) {
         observer.disconnect()
-        console.log(
-          "%c[Calm] Page settled after",
-          "color:#4caf50",
-          Date.now() - startTime,
-          "ms"
-        )
+        // console.log(
+        //   "%c[Calm] Page settled after",
+        //   "color:#4caf50",
+        //   Date.now() - startTime,
+        //   "ms"
+        // )
         resolve()
         return
       }
       // Safety: resolve after maxWait regardless
       if (Date.now() - startTime >= maxWait) {
-        console.log("%c[Calm] Max wait reached, proceeding...", "color:#ff9800")
+        // console.log("%c[Calm] Max wait reached, proceeding...", "color:#ff9800")
         observer.disconnect()
         resolve()
         return
@@ -77,11 +77,11 @@ export function waitForPageCalm(
  */
 export function applyAllHighlights(highlights: HighlightAnchor[]): void {
   for (const [i, h] of highlights.entries()) {
-    console.log(
-      `%c[Reapply] (${i + 1}/${highlights.length}) Quote:`,
-      "color:#4caf50",
-      h.quote.slice(0, 60)
-    )
+    // console.log(
+    //   `%c[Reapply] (${i + 1}/${highlights.length}) Quote:`,
+    //   "color:#4caf50",
+    //   h.quote.slice(0, 60)
+    // )
     applyHighlight(h)
   }
   document.querySelectorAll(".hn-note-icon").forEach((icon) => {
@@ -102,7 +102,7 @@ let globalObserver: MutationObserver | null = null
  */
 
 export function observeDomChanges(): void {
-  console.log("%c[Observer] Watching DOM for React updates...", "color:#ff5722")
+  // console.log("%c[Observer] Watching DOM for React updates...", "color:#ff5722")
 
   let reapplyTimeout: number | null = null
   let lastCheckTime = 0
@@ -131,10 +131,10 @@ export function observeDomChanges(): void {
           return
         }
         if (currentCount < expectedCount) {
-          console.log(
-            `%c[Observer] React updated DOM → Re-applying highlights (${currentCount}/${expectedCount} visible)`,
-            "color:#ff5722"
-          )
+          // console.log(
+          //   `%c[Observer] React updated DOM → Re-applying highlights (${currentCount}/${expectedCount} visible)`,
+          //   "color:#ff5722"
+          // )
           applyAllHighlights(currentHighlights)
           attachHighlightHoverHandlers()
           setTimeout(() => toggleHighlighterVisuals(true), 50)
@@ -149,7 +149,7 @@ export function observeDomChanges(): void {
   window.addEventListener("beforeunload", () => {
     if (globalObserver) {
       globalObserver.disconnect()
-      console.log("%c[Observer] Disconnected on unload", "color:#757575")
+      // console.log("%c[Observer] Disconnected on unload", "color:#757575")
     }
   })
 }

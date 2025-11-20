@@ -141,12 +141,12 @@ export function findQuote(
   const range = document.createRange()
   range.setStart(textNodes[startNodeIdx], start - positions[startNodeIdx])
   range.setEnd(textNodes[endNodeIdx], end - positions[endNodeIdx])
-  console.log(
-    "%c[FindQuote] Matched occurrence at index",
-    "color:#4caf50",
-    chosen,
-    "out of",
-    matches.length
-  )
+  // console.log(
+  //   "%c[FindQuote] Matched occurrence at index",
+  //   "color:#4caf50",
+  //   chosen,
+  //   "out of",
+  //   matches.length
+  // )
   return range
 }

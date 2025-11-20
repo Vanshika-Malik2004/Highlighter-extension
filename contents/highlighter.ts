@@ -18,11 +18,11 @@ export let currentHighlights: HighlightAnchor[] = []
 export let highlighterEnabled = true
 let isAuthenticated = false
 
-console.log(
-  "%c[Highlighter] Content script loaded on:",
-  "color:#9c27b0;font-weight:bold",
-  location.href
-)
+// console.log(
+//   "%c[Highlighter] Content script loaded on:",
+//   "color:#9c27b0;font-weight:bold",
+//   location.href
+// )
 
 // Inject global style once (if not already present)
 function ensureHNStyleTag() {
@@ -135,24 +135,24 @@ async function reapplyStoredHighlightsIfAny() {
   currentHighlights = highlights
 
   if (!highlights.length) {
-    console.log(
-      "%c[Reapply] No highlights saved for this page.",
-      "color:#757575"
-    )
+    // console.log(
+    //   "%c[Reapply] No highlights saved for this page.",
+    //   "color:#757575"
+    // )
     return
   }
 
-  console.log(
-    "%c[Reapply] Found highlights to restore:",
-    "color:#4caf50",
-    highlights.length
-  )
+  // console.log(
+  //   "%c[Reapply] Found highlights to restore:",
+  //   "color:#4caf50",
+  //   highlights.length
+  // )
 
   await waitForPageCalm()
-  console.log(
-    "%c[Reapply] Page is calm, applying highlights...",
-    "color:#4caf50"
-  )
+  // console.log(
+  //   "%c[Reapply] Page is calm, applying highlights...",
+  //   "color:#4caf50"
+  // )
   applyAllHighlights(highlights)
   attachHighlightHoverHandlers()
   observeDomChanges()
@@ -161,16 +161,13 @@ async function reapplyStoredHighlightsIfAny() {
 // === Enable/Disable respecting auth state ===
 async function disableHighlighter(skipHide = false) {
   // Visuals are controlled elsewhere but make sure we clean interactions
-  console.log("%c[Highlighter] Disabled", "color:red")
+  // console.log("%c[Highlighter] Disabled", "color:red")
 
   // Block selection/hover interactions
   detachCoreListeners()
 
   // Hide via CSS class
   toggleHighlighterVisuals(false)
-
-  if (!skipHide) {
-  }
 }
 
 async function enableHighlighter() {
@@ -186,7 +183,7 @@ async function enableHighlighter() {
     return
   }
 
-  console.log("%c[Highlighter] Enabled", "color:green")
+  // console.log("%c[Highlighter] Enabled", "color:green")
   await new Promise((r) => setTimeout(r, 120))
   toggleHighlighterVisuals(true)
 
@@ -208,7 +205,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return
   }
   if (msg.type === "USER_SIGNED_OUT") {
-    console.log("%c[Highlighter] Popup → User signed out", "color:red")
+    // console.log("%c[Highlighter] Popup → User signed out", "color:red")
 
     // Turn off interactions
     highlighterEnabled = false
@@ -229,7 +226,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return
   }
   if (msg.type === "USER_SIGNED_IN") {
-    console.log("%c[Highlighter] Popup → User signed in", "color:green")
+    // console.log("%c[Highlighter] Popup → User signed in", "color:green")
 
     isAuthenticated = true
     enableHighlighter()
@@ -277,10 +274,10 @@ async function boot() {
   isAuthenticated = !!data.session?.user
 
   if (!isAuthenticated) {
-    console.log(
-      "%c[Highlighter] Not logged in — keeping disabled.",
-      "color:orange"
-    )
+    // console.log(
+    //   "%c[Highlighter] Not logged in — keeping disabled.",
+    //   "color:orange"
+    // )
     toggleHighlighterVisuals(false)
     // Ensure nothing is active
     await disableHighlighter(true)
@@ -299,13 +296,13 @@ async function boot() {
 supabase.auth.onAuthStateChange((_event, session) => {
   isAuthenticated = !!session?.user
   if (isAuthenticated) {
-    console.log(
-      "%c[Auth] Logged in → enabling (if user toggle is ON)",
-      "color:green"
-    )
+    // console.log(
+    //   "%c[Auth] Logged in → enabling (if user toggle is ON)",
+    //   "color:green"
+    // )
     enableHighlighter()
   } else {
-    console.log("%c[Auth] Logged out → disabling & clearing UI", "color:red")
+    // console.log("%c[Auth] Logged out → disabling & clearing UI", "color:red")
     // Hide visuals and interactions on logout
     toggleHighlighterVisuals(false)
     disableHighlighter(true)

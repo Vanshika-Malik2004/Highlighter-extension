@@ -39,7 +39,7 @@ export function addNoteIcon(
     const noteDisplay =
       noteText.length > 200 ? noteText.slice(0, 200) + "..." : noteText
     alert(`📝 Note:\n\n${noteDisplay}`)
-    console.log("%c[Note] Displayed note:", "color:#9c27b0", noteText)
+    // console.log("%c[Note] Displayed note:", "color:#9c27b0", noteText)
   }
   icon.onmouseenter = () => {
     icon.style.transform = "scale(1.2)"
@@ -49,7 +49,7 @@ export function addNoteIcon(
     icon.style.transform = "scale(1)"
   }
   highlightElement.appendChild(icon)
-  console.log("%c[Note] Icon added to highlight", "color:#9c27b0")
+  // console.log("%c[Note] Icon added to highlight", "color:#9c27b0")
 }
 
 /**
@@ -72,7 +72,7 @@ export function scrollToHighlightById(id: string): void {
     `.${CSS_CLASSES.HIGHLIGHT}[data-id="${id}"]`
   ) as HTMLElement
   if (!target) {
-    console.warn("Highlight not found for id:", id)
+    // console.warn("Highlight not found for id:", id)
     return
   }
 

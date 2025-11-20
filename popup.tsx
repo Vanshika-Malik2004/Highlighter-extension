@@ -16,8 +16,13 @@ export default function IndexPopup() {
   const handleJump = async (id: string) => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
     if (!tab?.id) return
-    await chrome.tabs.sendMessage(tab.id, { type: "SCROLL_TO_HIGHLIGHT", id })
-    window.close()
+    try {
+      await chrome.tabs.sendMessage(tab.id, { type: "SCROLL_TO_HIGHLIGHT", id })
+      window.close()
+    } catch (error) {
+      // console.warn("[Popup] Could not send message to tab:", error)
+      // Tab doesn't have content script loaded, ignore silently
+    }
   }
   // On mount: fetch tab info + session
   useEffect(() => {
@@ -63,9 +68,9 @@ export default function IndexPopup() {
       }
       try {
         await processSyncQueue() // ⬅️ ADD THIS LINE
-        console.log("[Popup] Sync queue processed, now fetching from Supabase")
+        // console.log("[Popup] Sync queue processed, now fetching from Supabase")
       } catch (err) {
-        console.warn("[Popup] Sync failed:", err)
+        // console.warn("[Popup] Sync failed:", err)
       }
 
       // 2️⃣ Fetch from Supabase and merge with local
@@ -85,46 +90,48 @@ export default function IndexPopup() {
           }
         })
 
-        console.log(
-          `[Popup] Merged highlights: ${localHighlights.length} local + ${remote.length} remote = ${merged.length} total`
-        )
+        // console.log(
+        //   `[Popup] Merged highlights: ${localHighlights.length} local + ${remote.length} remote = ${merged.length} total`
+        // )
         await chrome.storage.local.set({
           [tabUrl]: { highlights: merged }
         })
 
-        console.log(
-          `[Popup] Saved ${merged.length} merged highlights to local storage`
-        )
+        // console.log(
+        //   `[Popup] Saved ${merged.length} merged highlights to local storage`
+        // )
         setHighlights(merged)
       } catch (err) {
-        console.warn("[Popup] Failed to fetch remote, showing local only:", err)
+        // console.warn("[Popup] Failed to fetch remote, showing local only:", err)
         // Network error → fall back to local
         setHighlights(localHighlights)
       }
     })()
   }, [tabUrl, user])
-  // Process sync queue when popup first opens (if logged in)
+  // Process sync queue when user logs in or popup opens with authenticated user
   useEffect(() => {
     if (user) {
-      console.log("[Popup] Popup opened - processing sync queue")
-      processSyncQueue().catch((err) =>
-        console.warn("[Popup] Sync queue failed:", err)
-      )
+      processSyncQueue().catch((err) => {
+        // console.warn("[Popup] Sync queue failed:", err)
+      })
     }
-  }, []) // Empty deps = run once on mount
-  useEffect(() => {
-    if (user) processSyncQueue().catch(() => {})
   }, [user])
   const toggleHighlighter = async () => {
     const newState = !enabled
     setEnabled(newState)
     await chrome.storage.sync.set({ [HIGHLIGHTER_ENABLED_KEY]: newState })
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-    if (tab?.id)
-      await chrome.tabs.sendMessage(tab.id, {
-        type: "TOGGLE_HIGHLIGHTER",
-        enabled: newState
-      })
+    if (tab?.id) {
+      try {
+        await chrome.tabs.sendMessage(tab.id, {
+          type: "TOGGLE_HIGHLIGHTER",
+          enabled: newState
+        })
+      } catch (error) {
+        // console.warn("[Popup] Could not send toggle message to tab:", error)
+        // Tab doesn't have content script loaded, ignore silently
+      }
+    }
   }
 
   const signOut = async () => {
@@ -133,7 +140,12 @@ export default function IndexPopup() {
     // Notify all active tabs to clear highlights immediately
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
     if (tab?.id) {
-      await chrome.tabs.sendMessage(tab.id, { type: "USER_SIGNED_OUT" })
+      try {
+        await chrome.tabs.sendMessage(tab.id, { type: "USER_SIGNED_OUT" })
+      } catch (error) {
+        // console.warn("[Popup] Could not send sign out message to tab:", error)
+        // Tab doesn't have content script loaded, ignore silently
+      }
     }
   }
   // Notify page on login as well
@@ -145,7 +157,15 @@ export default function IndexPopup() {
           currentWindow: true
         })
         if (tab?.id) {
-          await chrome.tabs.sendMessage(tab.id, { type: "USER_SIGNED_IN" })
+          try {
+            await chrome.tabs.sendMessage(tab.id, { type: "USER_SIGNED_IN" })
+          } catch (error) {
+            // console.warn(
+            //   "[Popup] Could not send sign in message to tab:",
+            //   error
+            // )
+            // Tab doesn't have content script loaded, ignore silently
+          }
         }
       })()
     }

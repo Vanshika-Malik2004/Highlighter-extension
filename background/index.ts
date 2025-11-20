@@ -10,7 +10,7 @@ let isSyncing = false
  */
 async function safeSyncQueue() {
   if (isSyncing) {
-    console.log("[Background] Sync already in progress, skipping")
+    // console.log("[Background] Sync already in progress, skipping")
     return
   }
 
@@ -21,21 +21,21 @@ async function safeSyncQueue() {
       data: { session }
     } = await supabase.auth.getSession()
     if (!session?.user) {
-      console.log("[Background] No user session, skipping sync")
+      // console.log("[Background] No user session, skipping sync")
       return
     }
 
     // Check if online
     if (!navigator.onLine) {
-      console.log("[Background] Offline, skipping sync")
+      // console.log("[Background] Offline, skipping sync")
       return
     }
 
-    console.log("[Background] Processing sync queue...")
+    // console.log("[Background] Processing sync queue...")
     await processSyncQueue()
-    console.log("[Background] ✅ Sync queue processed successfully")
+    // console.log("[Background] ✅ Sync queue processed successfully")
   } catch (err) {
-    console.error("[Background] ❌ Sync failed:", err)
+    // console.error("[Background] ❌ Sync failed:", err)
   } finally {
     isSyncing = false
   }
@@ -53,25 +53,25 @@ function createSyncAlarm() {
     delayInMinutes: 2,
     periodInMinutes: 2
   })
-  console.log("[Background] ⏰ Sync alarm created (2 min interval)")
+  // console.log("[Background] ⏰ Sync alarm created (2 min interval)")
 }
 
 // On extension install
 chrome.runtime.onInstalled.addListener(() => {
-  console.log("[Background] Extension installed/updated")
+  // console.log("[Background] Extension installed/updated")
   createSyncAlarm()
 })
 
 // On browser startup
 chrome.runtime.onStartup.addListener(() => {
-  console.log("[Background] Browser started")
+  // console.log("[Background] Browser started")
   createSyncAlarm()
 })
 
 // Listen for alarm and trigger sync
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === "sync-highlights-queue") {
-    console.log("[Background] ⏰ Periodic sync alarm fired")
+    // console.log("[Background] ⏰ Periodic sync alarm fired")
     safeSyncQueue()
   }
 })
@@ -84,7 +84,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
  * Listen for network reconnection in service worker
  */
 self.addEventListener("online", () => {
-  console.log("[Background] 🌐 Network reconnected - triggering immediate sync")
+  // console.log("[Background] 🌐 Network reconnected - triggering immediate sync")
   safeSyncQueue()
 })
 
@@ -94,7 +94,7 @@ self.addEventListener("online", () => {
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "PROCESS_SYNC_QUEUE") {
-    console.log("[Background] Manual sync requested")
+    // console.log("[Background] Manual sync requested")
     safeSyncQueue()
       .then(() => sendResponse({ ok: true }))
       .catch((err) => sendResponse({ ok: false, error: err.message }))
@@ -113,7 +113,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 // Trigger sync when service worker first loads
 ;(async () => {
-  console.log("[Background] Service worker activated")
+  // console.log("[Background] Service worker activated")
   // Small delay to let things settle
   setTimeout(() => {
     safeSyncQueue()

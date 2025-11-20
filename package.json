@@ -1,7 +1,7 @@
 {
   "name": "highlighter-extension",
   "displayName": "Highlighter extension",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Highlighter for websites",
   "author": "Vanshika",
   "scripts": {
@@ -32,7 +32,6 @@
   "manifest": {
     "permissions": [
       "storage",
-      "identity",
       "tabs",
       "activeTab",
       "scripting",

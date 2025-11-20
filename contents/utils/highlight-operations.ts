@@ -17,26 +17,26 @@ export async function createHighlight(
   color: string,
   note?: string
 ): Promise<void> {
-  console.log("%c[Create] Creating highlight...", "color:#8bc34a")
+  // console.log("%c[Create] Creating highlight...", "color:#8bc34a")
   const id = `hn-highlight-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
   const prefix = getContext(range, -30)
   const suffix = getContext(range, 30)
   const { start_pos, end_pos } = computeOffsets(range)
   const css_path = getCssPath(range.startContainer)
 
-  console.log("%c[Create] Anchor data:", "color:#8bc34a", {
-    quote: quote.slice(0, 60) + (quote.length > 60 ? "..." : ""),
-    prefix: prefix || "(empty)",
-    suffix: suffix || "(empty)",
-    start_pos,
-    end_pos,
-    css_path
-  })
-  console.log(
-    "%c[Create] Full context:",
-    "color:#8bc34a",
-    `"${prefix}" + [${quote.slice(0, 30)}...] + "${suffix}"`
-  )
+  // console.log("%c[Create] Anchor data:", "color:#8bc34a", {
+  //   quote: quote.slice(0, 60) + (quote.length > 60 ? "..." : ""),
+  //   prefix: prefix || "(empty)",
+  //   suffix: suffix || "(empty)",
+  //   start_pos,
+  //   end_pos,
+  //   css_path
+  // })
+  // console.log(
+  //   "%c[Create] Full context:",
+  //   "color:#8bc34a",
+  //   `"${prefix}" + [${quote.slice(0, 30)}...] + "${suffix}"`
+  // )
 
   const span = document.createElement("mark")
   span.className = CSS_CLASSES.HIGHLIGHT
@@ -66,26 +66,26 @@ export async function createHighlight(
  */
 export function applyHighlight(anchor: HighlightAnchor): void {
   if (isDeletingNow()) return
-  console.log(
-    "%c[Apply] Applying saved highlight:",
-    "color:#ffc107",
-    anchor.quote.slice(0, 60)
-  )
+  // console.log(
+  //   "%c[Apply] Applying saved highlight:",
+  //   "color:#ffc107",
+  //   anchor.quote.slice(0, 60)
+  // )
   const { quote, prefix, suffix, color, note, id } = anchor
   if (
     id &&
     document.querySelector(`.${CSS_CLASSES.HIGHLIGHT}[data-id="${id}"]`)
   ) {
-    console.log("%c[Apply] Skipping - already exists:", "color:#ff9800", id)
+    // console.log("%c[Apply] Skipping - already exists:", "color:#ff9800", id)
     return
   }
   const range = findQuote(document.body, quote, prefix, suffix)
   if (!range) {
-    console.warn(
-      "%c[Apply] Could not re-find quote:",
-      "color:red",
-      quote.slice(0, 60)
-    )
+    // console.warn(
+    //   "%c[Apply] Could not re-find quote:",
+    //   "color:red",
+    //   quote.slice(0, 60)
+    // )
     return
   }
   const span = document.createElement("mark")
@@ -94,7 +94,7 @@ export function applyHighlight(anchor: HighlightAnchor): void {
   if (note) span.dataset.note = note
   span.style.background = color
   wrapRangeInElement(range, span)
-  console.log("%c[Apply] ✓ Highlight restored successfully", "color:#4caf50")
+  // console.log("%c[Apply] ✓ Highlight restored successfully", "color:#4caf50")
 }
 
 /**

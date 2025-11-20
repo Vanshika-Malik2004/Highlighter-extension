@@ -34,7 +34,8 @@ export default function AuthForm() {
         setMode("signin")
       } else if (mode === "forgot") {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: "http://localhost:3000/reset-password"
+          redirectTo:
+            "https://highlighter-extension-frontend.vercel.app/reset-password"
         })
         if (error) throw error
         setMessage("Password reset link sent! Check your email.")

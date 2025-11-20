@@ -26,7 +26,7 @@ export function showToolbar(
   range: Range,
   quote: string
 ): void {
-  console.log("%c[Toolbar] Showing color picker", "color:#ff9800")
+  // console.log("%c[Toolbar] Showing color picker", "color:#ff9800")
   const bar = document.createElement("div")
   bar.className = CSS_CLASSES.TOOLBAR
   Object.assign(bar.style, {
@@ -54,7 +54,7 @@ export function showToolbar(
       cursor: "pointer"
     })
     b.onclick = () => {
-      console.log("%c[Toolbar] Color chosen:", "color:#ff9800", c)
+      // console.log("%c[Toolbar] Color chosen:", "color:#ff9800", c)
       createHighlight(range, quote, c)
       bar.remove()
     }
@@ -70,7 +70,7 @@ export function showToolbar(
   })
   noteBtn.onclick = () => {
     const note = prompt("Add a note (optional):") || ""
-    console.log("%c[Toolbar] Note added:", "color:#ff9800", note)
+    // console.log("%c[Toolbar] Note added:", "color:#ff9800", note)
     createHighlight(range, quote, COLORS[0], note)
     bar.remove()
   }
